@@ -14,7 +14,7 @@ How to download and compile---
 2:Go to your lr35902 folder and open the cmd with administrator permissions.
 ----This part requires a c++ compiler and CMake.
 3:Insert this codes in your cmd and your folder of the emulator in order:
-mkdir build
-cd build
-cmake ..
-cmake --build .
+mkdir build |
+cd build |
+cmake .. |
+cmake --build . |
