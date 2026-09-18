@@ -41,8 +41,25 @@ public:
                 std::cout << "NOP" << std::endl;
                 break;
 
+            case 0xF3: // DI (Disable Interrupts)
+                std::cout << "DI (Desactivar Interrupciones)" << std::endl;
+                break;
+
+            case 0xAF: // XOR A
+                A = A ^ A; // A = 0
+                F = 0x80;  // Bandera Zero activada
+                std::cout << "XOR A (A = 0x00)" << std::endl;
+                break;
+
+            case 0xE0: { // LDH (a8), A
+                uint8_t offset = memory[PC++];
+                uint16_t targetAddress = 0xFF00 + offset;
+                memory[targetAddress] = A;
+                std::cout << "LDH (0x" << std::hex << std::uppercase << targetAddress << "), A" << std::endl;
+                break;
+            }
+
             case 0xC3: { // JP a16 (Jump a dirección de 16 bits)
-                // La Game Boy guarda los enteros en Little-Endian (Byte Bajo primero, luego Byte Alto)
                 uint16_t low = memory[PC++];
                 uint16_t high = memory[PC++];
                 uint16_t targetAddress = (high << 8) | low;
@@ -62,7 +79,7 @@ public:
 };
 
 int main() {
-    std::cout << "=== shadev64 :: LR35902 CPU Core v0.1.1 ===" << std::endl;
+    std::cout << "=== shadev64 :: LR35902 CPU Core v0.1.2 ===" << std::endl;
 
     LR35902 cpu;
 
