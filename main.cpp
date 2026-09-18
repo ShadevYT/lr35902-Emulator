@@ -6,20 +6,16 @@
 
 class LR35902 {
 public:
-    // Registros de 8 bits de la CPU
     uint8_t A = 0, F = 0;
     uint8_t B = 0, C = 0;
     uint8_t D = 0, E = 0;
     uint8_t H = 0, L = 0;
 
-    // Registros de 16 bits (Program Counter y Stack Pointer)
-    uint16_t PC = 0x0100; // El punto de entrada oficial de la Game Boy
+    uint16_t PC = 0x0100;
     uint16_t SP = 0xFFFE;
 
-    // Bus de memoria de 64 KB (65,536 bytes)
     uint8_t memory[65536] = {0};
 
-    // Función para abrir la ROM y copiar sus bytes a la RAM del emulador
     bool loadROM(const std::string& filename) {
         std::ifstream file(filename, std::ios::binary);
         if (!file.is_open()) {
@@ -27,36 +23,58 @@ public:
             return false;
         }
 
-        // Leemos la ROM binaria directamente en nuestra memoria
         file.read(reinterpret_cast<char*>(memory), 65536);
-        std::cout << "✅ ROM cargada con éxito en la memoria." << std::endl;
+        std::cout << "✅ ROM cargada con exito en la memoria." << std::endl;
         return true;
     }
 
-    // Ciclo básico Fetch-Decode (Lee la instrucción y avanza el PC)
     void step() {
-        uint8_t opcode = memory[PC];
+        uint16_t currentPC = PC; // Guardamos la dirección actual para el log
+        uint8_t opcode = memory[PC++]; // Leemos el byte y avanzamos el PC
 
-        // Imprime en consola la dirección actual (PC) y el Opcode en Hexadecimal
-        std::cout << "PC: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << PC 
-                  << " | Opcode: 0x" << std::setw(2) << (int)opcode << std::endl;
+        std::cout << "PC: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << currentPC 
+                  << " | Opcode: 0x" << std::setw(2) << (int)opcode << " -> ";
 
-        PC++; // Avanzamos al siguiente byte en memoria
+        // Decodificador de Instrucciones (Decode & Execute)
+        switch (opcode) {
+            case 0x00: // NOP (No Operation)
+                std::cout << "NOP" << std::endl;
+                break;
+
+            case 0xC3: { // JP a16 (Jump a dirección de 16 bits)
+                // La Game Boy guarda los enteros en Little-Endian (Byte Bajo primero, luego Byte Alto)
+                uint16_t low = memory[PC++];
+                uint16_t high = memory[PC++];
+                uint16_t targetAddress = (high << 8) | low;
+
+                std::cout << "JP 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << targetAddress 
+                          << " (SALTANDO...)" << std::endl;
+
+                PC = targetAddress; // La CPU salta a la nueva dirección
+                break;
+            }
+
+            default:
+                std::cout << "Opcode no implementado aun!" << std::endl;
+                break;
+        }
     }
 };
 
 int main() {
-    std::cout << "=== shadev64 :: LR35902 CPU Core v0.1 ===" << std::endl;
+    std::cout << "=== shadev64 :: LR35902 CPU Core v0.1.1 ===" << std::endl;
 
     LR35902 cpu;
 
-    // Intenta cargar una ROM de prueba (asegúrate de poner el nombre de tu ROM)
     if (cpu.loadROM("rom.gb")) {
-        std::cout << "\nEjecutando primeros 10 ciclos de lectura:\n" << std::endl;
-        for (int i = 0; i < 10; i++) {
+        std::cout << "\nEjecutando primeros 20 ciclos de instrucción:\n" << std::endl;
+        for (int i = 0; i < 20; i++) {
             cpu.step();
         }
     }
+
+    std::cout << "\nPresiona ENTER para salir...";
+    std::cin.get();
 
     return 0;
 }
